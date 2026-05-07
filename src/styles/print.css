@@ -1,0 +1,64 @@
+@media print {
+  :root {
+    --color-bg: white;
+    --color-text: black;
+    --color-text-muted: #444;
+    --color-border: #ccc;
+  }
+  .toolbar,
+  .toc,
+  .search-overlay,
+  .palette,
+  .settings-overlay,
+  .toast-stack {
+    display: none !important;
+  }
+  html.toc-open .layout {
+    grid-template-columns: 1fr;
+  }
+  body {
+    background: white;
+    color: black;
+  }
+  .markdown-body {
+    max-width: none;
+    padding: 0;
+    font-size: 11pt;
+    line-height: 1.5;
+    color: black;
+  }
+  .markdown-body h1 {
+    page-break-before: auto;
+  }
+  .markdown-body h1,
+  .markdown-body h2,
+  .markdown-body h3 {
+    page-break-after: avoid;
+  }
+  .markdown-body pre,
+  .markdown-body table,
+  .markdown-body img,
+  .markdown-body .mermaid {
+    page-break-inside: avoid;
+  }
+  .markdown-body a {
+    color: #0033cc;
+    border-bottom: none;
+  }
+  .markdown-body code,
+  .markdown-body pre {
+    background: #f5f5f5;
+    border: 1px solid #ddd;
+    color: black;
+  }
+  .frontmatter {
+    background: #f7f7f7;
+  }
+  .frontmatter .fm-chip {
+    background: #eee;
+    color: #333;
+  }
+  @page {
+    margin: 18mm 16mm;
+  }
+}

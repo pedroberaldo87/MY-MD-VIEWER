@@ -1,0 +1,99 @@
+:root {
+  --font-prose: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Helvetica, Arial,
+    sans-serif;
+  --font-mono: "SF Mono", ui-monospace, Menlo, Consolas, "Liberation Mono", monospace;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  --transition-fast: 120ms cubic-bezier(0.2, 0, 0.2, 1);
+  --transition-mid: 200ms cubic-bezier(0.2, 0, 0.2, 1);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.10);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.18);
+}
+
+[data-theme="light"] {
+  --color-bg: #fbfaf7;
+  --color-bg-elev: #ffffff;
+  --color-bg-sunk: #f3f1ec;
+  --color-border: rgba(0, 0, 0, 0.10);
+  --color-border-strong: rgba(0, 0, 0, 0.18);
+  --color-text: #1c1b18;
+  --color-text-muted: #6c6a64;
+  --color-text-faint: #9b9890;
+  --color-accent: #1f6feb;
+  --color-accent-soft: rgba(31, 111, 235, 0.10);
+  --color-danger: #c62828;
+  --color-success: #1f7a4d;
+  --color-search-hit: rgba(255, 209, 64, 0.55);
+  --color-search-hit-active: #ffb700;
+  --color-mark: rgba(31, 111, 235, 0.14);
+  --color-code-bg: #f3f1ec;
+  --color-code-border: rgba(0, 0, 0, 0.08);
+  --color-toolbar-bg: rgba(251, 250, 247, 0.85);
+  --color-overlay-bg: rgba(0, 0, 0, 0.30);
+}
+
+[data-theme="dark"] {
+  --color-bg: #16181c;
+  --color-bg-elev: #1d2025;
+  --color-bg-sunk: #101216;
+  --color-border: rgba(255, 255, 255, 0.10);
+  --color-border-strong: rgba(255, 255, 255, 0.18);
+  --color-text: #e8e6e1;
+  --color-text-muted: #9a9893;
+  --color-text-faint: #6c6a65;
+  --color-accent: #6aa3ff;
+  --color-accent-soft: rgba(106, 163, 255, 0.16);
+  --color-danger: #f08080;
+  --color-success: #6ad4a0;
+  --color-search-hit: rgba(255, 209, 64, 0.30);
+  --color-search-hit-active: #ffc940;
+  --color-mark: rgba(106, 163, 255, 0.20);
+  --color-code-bg: #0e1014;
+  --color-code-border: rgba(255, 255, 255, 0.06);
+  --color-toolbar-bg: rgba(22, 24, 28, 0.80);
+  --color-overlay-bg: rgba(0, 0, 0, 0.55);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-prose);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+kbd {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-elev);
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  box-shadow: 0 1px 0 var(--color-border);
+}
+
+/* Author rules with display: flex on overlays beat the UA `[hidden]` rule
+   because of equal specificity. Force hidden to actually hide. */
+[hidden] {
+  display: none !important;
+}

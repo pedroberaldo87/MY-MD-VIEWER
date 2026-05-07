@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MD Viewer</title>
+  </head>
+  <body>
+    <div id="app">
+      <header class="toolbar" id="toolbar">
+        <div class="toolbar-left">
+          <span class="file-path" id="file-path">No file open</span>
+        </div>
+        <div class="toolbar-right">
+          <button class="btn" id="btn-toc" title="Toggle TOC (Cmd+\)">
+            <span class="icon-toc"></span>
+          </button>
+          <button class="btn" id="btn-vault" title="Add to Vault">
+            Add to Vault
+          </button>
+          <button class="btn btn-icon" id="btn-theme" title="Toggle theme">
+            <span class="icon-theme"></span>
+          </button>
+          <button class="btn btn-icon" id="btn-menu" title="More">
+            <span class="icon-menu">⋯</span>
+          </button>
+        </div>
+      </header>
+
+      <main class="layout">
+        <article class="markdown-body" id="content">
+          <div class="empty-state" id="empty-state">
+            <h1>MD Viewer</h1>
+            <p>Press <kbd>⌘O</kbd> to open a Markdown file.</p>
+            <p>Press <kbd>⌘P</kbd> to see recent files.</p>
+          </div>
+        </article>
+        <aside class="toc" id="toc" hidden>
+          <div class="toc-header">On this page</div>
+          <nav class="toc-list" id="toc-list"></nav>
+        </aside>
+      </main>
+
+      <div class="search-overlay" id="search-overlay" hidden>
+        <input type="text" class="search-input" id="search-input" placeholder="Find in document" />
+        <span class="search-counter" id="search-counter">0 / 0</span>
+        <button class="btn-icon" id="search-prev" title="Previous (Shift+Enter)">↑</button>
+        <button class="btn-icon" id="search-next" title="Next (Enter)">↓</button>
+        <button class="btn-icon" id="search-close" title="Close (Esc)">✕</button>
+      </div>
+
+      <div class="palette" id="palette" hidden>
+        <input type="text" class="palette-input" id="palette-input" placeholder="Recent files…" />
+        <ul class="palette-list" id="palette-list"></ul>
+      </div>
+
+      <div class="settings-overlay" id="settings-overlay" hidden>
+        <div class="settings-card">
+          <h2>Settings</h2>
+          <div class="settings-row">
+            <label>Vault folder</label>
+            <div class="settings-value">
+              <span id="settings-vault-path">Not configured</span>
+              <button class="btn" id="settings-vault-change">Change…</button>
+            </div>
+          </div>
+          <div class="settings-hint" id="settings-vault-hint" hidden></div>
+          <div class="settings-row">
+            <label>Theme</label>
+            <select id="settings-theme">
+              <option value="system">System</option>
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+            </select>
+          </div>
+          <div class="settings-actions">
+            <button type="button" class="btn" id="settings-close">Done</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="toast-stack" id="toast-stack"></div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
