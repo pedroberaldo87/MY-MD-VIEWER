@@ -28,3 +28,6 @@ yarn-error.log*
 .env
 .env.local
 .env.*.local
+
+# Local agent notes (never published)
+.claude/
