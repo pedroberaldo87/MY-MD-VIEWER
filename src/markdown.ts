@@ -4,6 +4,7 @@ import hljs from "highlight.js";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import type { Frontmatter, RenderResult } from "./types";
 import { parseFrontmatter } from "./frontmatter";
+import { resolveRelativePath } from "./links";
 
 import frontMatterPlugin from "markdown-it-front-matter";
 import taskListsPlugin from "markdown-it-task-lists";
@@ -97,19 +98,6 @@ md.renderer.rules.image = (tokens, idx, options, env, self) => {
   }
   return defaultImageRender(tokens, idx, options, env, self);
 };
-
-function resolveRelativePath(baseDir: string, rel: string): string {
-  // Strip query/hash for path resolution, re-attach later.
-  const [pathPart, ...rest] = rel.split(/([?#].*)$/);
-  const tail = rest.join("");
-  const segments = pathPart.split("/").filter((s) => s !== "" && s !== ".");
-  const baseSegments = baseDir.replace(/\/+$/, "").split("/");
-  for (const seg of segments) {
-    if (seg === "..") baseSegments.pop();
-    else baseSegments.push(seg);
-  }
-  return baseSegments.join("/") + tail;
-}
 
 export function renderMarkdown(content: string, baseDir: string | null): RenderResult {
   capturedFrontmatter = null;

@@ -11,6 +11,7 @@ import { initSettings } from "./settings";
 import { initTheme, isDark, onThemeChange } from "./theme";
 import { startWatching, stopWatching, restoreScrollPercent } from "./reload";
 import { bindShortcuts } from "./menu";
+import { initLinkHandler } from "./link-handler";
 import "highlight.js/styles/github-dark.css";
 import "katex/dist/katex.min.css";
 import "./styles/tokens.css";
@@ -31,6 +32,7 @@ async function boot() {
   initSearch();
   initPalette();
   initSettings();
+  initLinkHandler(() => window.__MD_VIEWER__.currentFileDir);
   bindShortcuts({
     getCurrentFilePath: () => window.__MD_VIEWER__.currentFilePath,
   });
