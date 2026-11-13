@@ -57,7 +57,7 @@
     "macOS": {
       "minimumSystemVersion": "11.0",
       "exceptionDomain": null,
-      "signingIdentity": null,
+      "signingIdentity": "-",
       "providerShortName": null,
       "entitlements": null
     }
