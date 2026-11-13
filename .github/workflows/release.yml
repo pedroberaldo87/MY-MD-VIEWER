@@ -52,8 +52,11 @@ jobs:
           pnpm run typecheck
           pnpm test
 
-      - name: Build app and DMG (unsigned)
+      - name: Build app and DMG (ad-hoc signed)
         run: pnpm tauri build --bundles dmg
+
+      - name: Verify the app signature inside the DMG
+        run: scripts/verify-dmg-signature.sh src-tauri/target/release/bundle/dmg
 
       - name: Upload DMG
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
