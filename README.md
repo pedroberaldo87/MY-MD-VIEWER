@@ -137,7 +137,9 @@ src-tauri/            # Rust backend
 
 ## Releases (maintainers)
 
-CI builds on every push and PR to `main` (`.github/workflows/build.yml`). Pushing a tag `vX.Y.Z` that matches the version in `src-tauri/tauri.conf.json` runs `.github/workflows/release.yml`, which builds the unsigned DMG and attaches it to a **draft** GitHub Release. Review and publish it by hand.
+The DMG on the Releases page is built locally by the maintainer, never by GitHub Actions. CI (`.github/workflows/tests.yml`) only runs the typecheck, `vitest`, `pnpm audit --prod` and `cargo test`. Each release has a `SHA256SUMS` file next to the DMG; to check a download, run `shasum -a 256 -c SHA256SUMS` in the folder with both files.
+
+To release, run `scripts/release-local.sh <version>` from a clean, up-to-date `main`. It checks that the version matches `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml` and `package.json`, runs the tests, builds the unsigned DMG, verifies its signature and writes `SHA256SUMS`. It then prints the `git tag`, `git push` and `gh release create --draft` commands. With `--publish` it runs them and creates a **draft** GitHub Release. Review and publish it by hand.
 
 ## License
 

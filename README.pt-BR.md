@@ -100,7 +100,9 @@ A pilha e a estrutura de pastas estão descritas no [README em inglês](README.m
 
 ## Releases (mantenedores)
 
-O CI compila a cada push e PR para `main` (`.github/workflows/build.yml`). Enviar uma tag `vX.Y.Z` igual à versão de `src-tauri/tauri.conf.json` dispara `.github/workflows/release.yml`, que compila o DMG sem assinatura e o anexa a um **rascunho** de GitHub Release. A revisão e a publicação são manuais.
+O DMG da página de Releases é compilado localmente pelo mantenedor, nunca pelo GitHub Actions. O CI (`.github/workflows/tests.yml`) só roda typecheck, `vitest`, `pnpm audit --prod` e `cargo test`. Cada release traz um arquivo `SHA256SUMS` junto do DMG; para conferir um download, rode `shasum -a 256 -c SHA256SUMS` na pasta com os dois arquivos.
+
+Para publicar, rode `scripts/release-local.sh <versão>` a partir de um `main` limpo e atualizado. Ele confere se a versão bate com `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml` e `package.json`, roda os testes, compila o DMG sem assinatura, verifica a assinatura e escreve o `SHA256SUMS`. Depois imprime os comandos `git tag`, `git push` e `gh release create --draft`. Com `--publish` ele os executa e cria um **rascunho** de GitHub Release. A revisão e a publicação são manuais.
 
 ## Licença
 
