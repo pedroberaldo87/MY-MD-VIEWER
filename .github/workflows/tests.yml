@@ -1,4 +1,7 @@
-name: Build
+name: Tests
+
+# CI only runs tests. Builds and releases are always done locally by the
+# maintainer (scripts/release-local.sh), never by GitHub Actions.
 
 on:
   push:
@@ -10,12 +13,12 @@ permissions:
   contents: read
 
 concurrency:
-  group: build-${{ github.ref }}
+  group: tests-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build:
-    name: Typecheck, test, build (macOS arm64)
+  test:
+    name: Typecheck and tests (macOS arm64)
     runs-on: macos-latest # Apple Silicon (aarch64)
     timeout-minutes: 45
     steps:
@@ -52,16 +55,11 @@ jobs:
       - name: Audit production dependencies
         run: pnpm audit --prod
 
-      - name: Build app and DMG (ad-hoc signed)
-        run: pnpm tauri build --bundles dmg
+      - name: Create the front-end placeholder for the Tauri macro
+        # tauri::generate_context! needs frontendDist (../dist) to exist when
+        # compiling. The tests do not use the real front-end build.
+        run: mkdir -p dist && touch dist/index.html
 
-      - name: Verify the app signature inside the DMG
-        run: scripts/verify-dmg-signature.sh src-tauri/target/release/bundle/dmg
-
-      - name: Upload DMG
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: MD-Viewer-dmg-${{ github.sha }}
-          path: src-tauri/target/release/bundle/dmg/*.dmg
-          if-no-files-found: error
-          retention-days: 14
+      - name: Rust tests
+        working-directory: src-tauri
+        run: cargo test --locked
