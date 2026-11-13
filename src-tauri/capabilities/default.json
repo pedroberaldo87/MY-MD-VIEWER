@@ -1,40 +1,21 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Default capability for the MD Viewer app",
+  "description": "Capabilities for the MD Viewer windows. File access happens in Rust commands (read_markdown_file, copy_to_vault, ...), not through the JS fs plugin, so no fs permissions are granted.",
   "windows": ["*"],
   "permissions": [
     "core:default",
-    "core:window:default",
-    "core:webview:default",
-    "core:event:default",
-    "core:app:default",
-    "core:resources:default",
-    "core:menu:default",
-    "core:path:default",
-    "core:image:default",
     "store:default",
-    "fs:default",
-    "fs:allow-read-text-file",
-    "fs:allow-read-file",
-    "fs:allow-write-text-file",
-    "fs:allow-write-file",
-    "fs:allow-exists",
-    "fs:allow-mkdir",
-    "fs:allow-stat",
-    "fs:scope-home-recursive",
-    "fs:scope-document-recursive",
-    "fs:scope-desktop-recursive",
-    "fs:scope-download-recursive",
-    "dialog:default",
     "dialog:allow-open",
-    "dialog:allow-save",
-    "dialog:allow-message",
     "dialog:allow-ask",
     "dialog:allow-confirm",
-    "opener:default",
-    "opener:allow-reveal-item-in-dir",
-    "opener:allow-open-path",
-    "opener:allow-open-url"
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [
+        { "url": "https://*" },
+        { "url": "http://*" },
+        { "url": "mailto:*" }
+      ]
+    }
   ]
 }
