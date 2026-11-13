@@ -1,12 +1,7 @@
-import { load, type Store } from "@tauri-apps/plugin-store";
-import { open as openDialog, ask, confirm } from "@tauri-apps/plugin-dialog";
+import { ask } from "@tauri-apps/plugin-dialog";
 import { invoke } from "@tauri-apps/api/core";
 import { showToast } from "./toast";
 
-const STORE_FILE = "settings.json";
-const KEY = "vault_folder";
-
-let storeRef: Store | null = null;
 let cached: string | null = null;
 
 interface DetectedVault {
@@ -22,18 +17,11 @@ export async function detectObsidianVault(): Promise<DetectedVault | null> {
   }
 }
 
-async function getStore(): Promise<Store> {
-  if (!storeRef) {
-    storeRef = await load(STORE_FILE, { autoSave: true, defaults: {} });
-  }
-  return storeRef;
-}
-
+// The vault folder is owned by the Rust side: it is registered when the user
+// picks it in a native dialog, and `copy_to_vault` only writes there.
 export async function initVault() {
   try {
-    const store = await getStore();
-    const v = (await store.get(KEY)) as string | undefined;
-    cached = v ?? null;
+    cached = (await invoke<string | null>("get_vault_folder")) ?? null;
   } catch {
     cached = null;
   }
@@ -44,39 +32,15 @@ export function getVaultPath(): string | null {
 }
 
 export async function chooseVaultFolder(): Promise<string | null> {
-  // Try Obsidian auto-detect first, before showing the directory picker.
-  const detected = await detectObsidianVault();
-  if (detected) {
-    const useDetected = await confirm(
-      `Found Obsidian vault:\n\n${detected.path}\n\nUse this as your vault folder?`,
-      { title: "Vault detected", okLabel: "Use this", cancelLabel: "Choose another…" },
-    );
-    if (useDetected) {
-      cached = detected.path;
-      try {
-        const store = await getStore();
-        await store.set(KEY, detected.path);
-      } catch {
-        /* ignore */
-      }
-      return detected.path;
-    }
-  }
-
-  const selected = await openDialog({
-    directory: true,
-    multiple: false,
-    title: "Select your Obsidian vault folder",
-  });
-  if (typeof selected !== "string") return null;
-  cached = selected;
+  // Rust offers the Obsidian-detected vault first, then a folder picker.
   try {
-    const store = await getStore();
-    await store.set(KEY, selected);
-  } catch {
-    /* ignore */
+    const chosen = await invoke<string | null>("choose_vault_folder");
+    if (chosen) cached = chosen;
+    return chosen ?? null;
+  } catch (err) {
+    showToast(`Could not set vault folder: ${err}`, "error");
+    return null;
   }
-  return selected;
 }
 
 export async function addCurrentToVault(srcPath: string | null) {
@@ -84,17 +48,14 @@ export async function addCurrentToVault(srcPath: string | null) {
     showToast("No file open to add", "error");
     return;
   }
-  let vault = getVaultPath();
-  if (!vault) {
+  if (!getVaultPath()) {
     showToast("Select your vault folder first", "info");
-    vault = await chooseVaultFolder();
-    if (!vault) return;
+    if (!(await chooseVaultFolder())) return;
   }
 
   try {
     const result = await invoke<string>("copy_to_vault", {
       src: srcPath,
-      vault,
       onConflict: "rename",
     });
     showToast(
@@ -110,7 +71,6 @@ export async function addCurrentToVault(srcPath: string | null) {
       try {
         const result = await invoke<string>("copy_to_vault", {
           src: srcPath,
-          vault,
           onConflict: choice,
         });
         showToast(

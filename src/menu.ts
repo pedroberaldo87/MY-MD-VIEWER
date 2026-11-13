@@ -1,4 +1,3 @@
-import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { invoke } from "@tauri-apps/api/core";
 import { openSearch, closeSearch } from "./search";
 import { toggleToc } from "./toc";
@@ -102,12 +101,10 @@ export function bindShortcuts(ctx: MenuContext) {
 }
 
 async function openFileDialog() {
-  const selected = await openDialog({
-    multiple: false,
-    directory: false,
-    filters: [{ name: "Markdown", extensions: ["md", "markdown", "mdown", "mkd", "mdwn", "mkdn"] }],
-  });
-  if (typeof selected === "string") {
-    await invoke("open_file_in_new_window", { path: selected });
+  // The native dialog runs in Rust, which registers the choice and opens the window.
+  try {
+    await invoke("pick_markdown_file");
+  } catch (err) {
+    console.warn("open dialog failed", err);
   }
 }

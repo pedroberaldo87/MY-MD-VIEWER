@@ -1,9 +1,11 @@
 mod fs_ops;
+mod scope;
 mod watcher;
 mod window;
 
 use std::sync::atomic::Ordering;
 use std::time::Duration;
+use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -14,11 +16,15 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .manage(watcher::WatcherState::default())
+        .manage(scope::Approved::default())
         .invoke_handler(tauri::generate_handler![
             fs_ops::read_markdown_file,
             fs_ops::copy_to_vault,
             fs_ops::reveal_in_finder,
             fs_ops::path_exists,
+            fs_ops::pick_markdown_file,
+            fs_ops::get_vault_folder,
+            fs_ops::choose_vault_folder,
             fs_ops::detect_obsidian_vault,
             window::open_file_in_new_window,
             window::open_empty_window,
@@ -26,6 +32,11 @@ pub fn run() {
             watcher::stop_watching,
         ])
         .setup(|app| {
+            // Load the paths the user approved in earlier sessions (kept by Rust).
+            if let Ok(dir) = app.path().app_data_dir() {
+                app.state::<scope::Approved>().load(&dir);
+            }
+
             // Open files passed via CLI argv. macOS file association does NOT use argv —
             // it sends Apple Events that are routed via RunEvent::Opened below — but argv
             // is still useful for Linux/Windows and `open --args` invocations.
@@ -35,7 +46,7 @@ pub fn run() {
                 }
                 if std::path::Path::new(&arg).exists() {
                     window::FIRST_WINDOW_HANDLED.store(true, Ordering::Relaxed);
-                    let _ = window::open_file_in_new_window_internal(app.handle(), arg);
+                    let _ = window::open_user_chosen_file(app.handle(), std::path::Path::new(&arg));
                 }
             }
 
@@ -67,7 +78,10 @@ pub fn run() {
                     };
                     if std::path::Path::new(&path_str).exists() {
                         window::FIRST_WINDOW_HANDLED.store(true, Ordering::Relaxed);
-                        let _ = window::open_file_in_new_window_internal(app_handle, path_str);
+                        let _ = window::open_user_chosen_file(
+                            app_handle,
+                            std::path::Path::new(&path_str),
+                        );
                     }
                 }
             }

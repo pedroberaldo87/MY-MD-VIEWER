@@ -1,7 +1,7 @@
+use crate::scope::Approved;
 use notify::RecommendedWatcher;
 use notify_debouncer_mini::{new_debouncer, DebounceEventResult, Debouncer};
 use std::collections::HashMap;
-use std::path::Path;
 use std::sync::Mutex;
 use std::time::Duration;
 use tauri::{AppHandle, Emitter, State};
@@ -20,8 +20,15 @@ pub fn start_watching(
     path: String,
     app: AppHandle,
     state: State<'_, WatcherState>,
+    approved: State<'_, Approved>,
 ) -> Result<(), String> {
-    let mut map = state.0.lock().map_err(|_| "watcher state lock poisoned".to_string())?;
+    // Only watch files the user opened (it would otherwise leak change events
+    // for arbitrary paths).
+    let watch_path = approved.authorize_read(&path)?;
+    let mut map = state
+        .0
+        .lock()
+        .map_err(|_| "watcher state lock poisoned".to_string())?;
 
     // Drop any previous watcher for this window so we don't leak descriptors.
     map.remove(&window_label);
@@ -46,7 +53,7 @@ pub fn start_watching(
 
     debouncer
         .watcher()
-        .watch(Path::new(&path), notify::RecursiveMode::NonRecursive)
+        .watch(&watch_path, notify::RecursiveMode::NonRecursive)
         .map_err(|e| e.to_string())?;
 
     map.insert(window_label, debouncer);
@@ -55,7 +62,10 @@ pub fn start_watching(
 
 #[tauri::command]
 pub fn stop_watching(window_label: String, state: State<'_, WatcherState>) -> Result<(), String> {
-    let mut map = state.0.lock().map_err(|_| "watcher state lock poisoned".to_string())?;
+    let mut map = state
+        .0
+        .lock()
+        .map_err(|_| "watcher state lock poisoned".to_string())?;
     map.remove(&window_label);
     Ok(())
 }

@@ -1,14 +1,12 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Capabilities for the MD Viewer windows. File access happens in Rust commands (read_markdown_file, copy_to_vault, ...), not through the JS fs plugin, so no fs permissions are granted.",
+  "description": "Capabilities for the MD Viewer windows. File access happens in Rust commands (read_markdown_file, copy_to_vault, ...), which only accept paths the user chose (see src-tauri/src/scope.rs); the open/folder dialogs also run from Rust, so only the ask dialog is granted to the webview. No fs permissions are granted.",
   "windows": ["*"],
   "permissions": [
     "core:default",
     "store:default",
-    "dialog:allow-open",
     "dialog:allow-ask",
-    "dialog:allow-confirm",
     {
       "identifier": "opener:allow-open-url",
       "allow": [
