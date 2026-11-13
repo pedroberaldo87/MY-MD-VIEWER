@@ -1,6 +1,8 @@
+use crate::scope::{self, Approved};
 use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};
+use std::path::Path;
 use std::sync::atomic::AtomicBool;
-use tauri::{AppHandle, Manager, WebviewUrl, WebviewWindowBuilder};
+use tauri::{AppHandle, Manager, State, WebviewUrl, WebviewWindowBuilder};
 use uuid::Uuid;
 
 /// True once SOMETHING (Apple Event, argv, or the cold-launch grace timer)
@@ -8,9 +10,23 @@ use uuid::Uuid;
 /// first file the user double-clicked in Finder.
 pub static FIRST_WINDOW_HANDLED: AtomicBool = AtomicBool::new(false);
 
+/// Open a file in a new window. Callable from the webview (links, recents), so
+/// the path must already be in the user-approved scope (see `scope.rs`).
 #[tauri::command]
-pub fn open_file_in_new_window(app: AppHandle, path: String) -> Result<String, String> {
-    open_file_in_new_window_internal(&app, path)
+pub fn open_file_in_new_window(
+    app: AppHandle,
+    path: String,
+    approved: State<'_, Approved>,
+) -> Result<String, String> {
+    let canon = approved.authorize_read(&path)?;
+    open_file_in_new_window_internal(&app, &canon)
+}
+
+/// A file the user chose outside the webview (open dialog, Finder / Open With,
+/// argv): register it, then open it.
+pub fn open_user_chosen_file(app: &AppHandle, path: &Path) -> Result<String, String> {
+    let canon = app.state::<Approved>().register_user_file(path)?;
+    open_file_in_new_window_internal(app, &canon)
 }
 
 #[tauri::command]
@@ -18,14 +34,16 @@ pub fn open_empty_window(app: AppHandle) -> Result<String, String> {
     open_empty_window_internal(&app)
 }
 
-pub fn open_file_in_new_window_internal(app: &AppHandle, path: String) -> Result<String, String> {
+/// `path` must be canonical and already approved (callers above ensure it).
+fn open_file_in_new_window_internal(app: &AppHandle, path: &Path) -> Result<String, String> {
     let label = format!("file-{}", short_id());
-    let encoded = utf8_percent_encode(&path, NON_ALPHANUMERIC).to_string();
+    let path_str = path.to_string_lossy().to_string();
+    let encoded = utf8_percent_encode(&path_str, NON_ALPHANUMERIC).to_string();
     let url = format!("index.html?file={}", encoded);
-    let title = file_title(&path);
+    let title = file_title(&path_str);
 
     // Let the asset protocol serve images next to this file (and only those).
-    allow_asset_dir_for(app, &path);
+    allow_asset_dir_for(app, path);
 
     WebviewWindowBuilder::new(app, &label, WebviewUrl::App(url.into()))
         .title(title)
@@ -76,19 +94,18 @@ fn file_title(path: &str) -> String {
 /// The directory is allowed recursively so `images/foo.png` works, except when it
 /// is `/` or the user's home folder itself (a Markdown file lying directly in
 /// ~ must not expose the whole home tree): there only direct children are allowed.
-fn allow_asset_dir_for(app: &AppHandle, file_path: &str) {
-    let Some(dir) = std::path::Path::new(file_path).parent() else {
+fn allow_asset_dir_for(app: &AppHandle, file_path: &Path) {
+    let Some(dir) = file_path.parent() else {
         return;
     };
     if dir.as_os_str().is_empty() || !dir.is_dir() {
         return;
     }
-    let home = std::env::var_os("HOME").map(std::path::PathBuf::from);
-    let too_broad = dir.parent().is_none() || home.as_deref() == Some(dir);
-    if let Err(e) = app
-        .asset_protocol_scope()
-        .allow_directory(dir, !too_broad)
-    {
+    let home = std::env::var_os("HOME")
+        .map(std::path::PathBuf::from)
+        .map(|h| std::fs::canonicalize(&h).unwrap_or(h));
+    let too_broad = scope::dir_is_too_broad(dir, home.as_deref());
+    if let Err(e) = app.asset_protocol_scope().allow_directory(dir, !too_broad) {
         log::warn!("could not extend asset scope for {}: {}", dir.display(), e);
     }
 }
