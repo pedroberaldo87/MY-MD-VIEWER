@@ -146,6 +146,13 @@ scripts/verify-dmg-signature.sh "$dmg_dir"
 dmg_path="$(find "$dmg_dir" -maxdepth 1 -name '*.dmg' -print)"
 [ -f "$dmg_path" ] || die "no DMG found in $dmg_dir"
 dmg_name="$(basename "$dmg_path")"
+# GitHub renames uploaded assets with spaces ("MD Viewer_…" becomes "MD.Viewer_…"),
+# which would break `shasum -c SHA256SUMS` after download. Use GitHub's name here.
+if [ "$dmg_name" != "${dmg_name// /.}" ]; then
+  mv "$dmg_path" "$dmg_dir/${dmg_name// /.}"
+  dmg_name="${dmg_name// /.}"
+  dmg_path="$dmg_dir/$dmg_name"
+fi
 (cd "$dmg_dir" && shasum -a 256 "$dmg_name" >SHA256SUMS)
 echo "==> SHA256SUMS"
 cat "$dmg_dir/SHA256SUMS"
