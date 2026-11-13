@@ -73,9 +73,13 @@ fi
 if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
   die "tag $tag already exists locally"
 fi
-if git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null 2>&1; then
-  die "tag $tag already exists on origin"
-fi
+remote_status=0
+git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null 2>&1 || remote_status=$?
+case "$remote_status" in
+  0) die "tag $tag already exists on origin" ;;
+  2) ;; # reachable, no such tag
+  *) die "cannot reach origin to check for tag $tag" ;;
+esac
 
 # --- 2. Version consistency ------------------------------------------------
 conf_version="$(node -p "require('./src-tauri/tauri.conf.json').version")"
@@ -167,12 +171,9 @@ echo
 echo "Built: $dmg_path"
 if [ "$publish" -eq 0 ]; then
   echo "Nothing was tagged or published. To publish, run these (or rerun with --publish):"
-  printf '  %q' "${tag_cmd[@]}"
-  echo
-  printf '  %q' "${push_cmd[@]}"
-  echo
-  printf '  %q' "${release_cmd[@]}"
-  echo
+  echo "  $(printf '%q ' "${tag_cmd[@]}")"
+  echo "  $(printf '%q ' "${push_cmd[@]}")"
+  echo "  $(printf '%q ' "${release_cmd[@]}")"
   exit 0
 fi
 
