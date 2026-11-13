@@ -2,6 +2,10 @@
 
 A fast, native Markdown viewer for macOS. Built with Tauri 2 (Rust + WKWebView), TypeScript, and a vanilla frontend.
 
+[Português (Brasil)](README.pt-BR.md)
+
+> Status: pre-1.0 (`0.1.x`). Builds are **unsigned** and for **Apple Silicon** Macs only (details below).
+
 ## Features
 
 - **GFM rendering** — tables, task lists, strikethrough, autolinks
@@ -23,13 +27,14 @@ A fast, native Markdown viewer for macOS. Built with Tauri 2 (Rust + WKWebView),
 - **Window per file** — each Markdown file opens in its own window (TextEdit/Preview style)
 - **File association** — register as default `.md` handler in Finder
 
-## Install (first time)
+## Install
 
-1. Build the app: `pnpm install && pnpm tauri build`.
-2. Drag `src-tauri/target/release/bundle/macos/MD Viewer.app` to `/Applications`.
-3. **First open is special** — the app is unsigned, so Gatekeeper will warn.
-   - Right-click `MD Viewer.app` → **Open** → confirm.
-   - Or run once from Terminal:
+1. Download `MD Viewer_<version>_aarch64.dmg` from the [Releases](../../releases) page.
+2. Open the DMG and drag **MD Viewer** to `/Applications`.
+3. **First launch (unsigned app).** The app is not signed with an Apple Developer ID and not notarized, so macOS Gatekeeper blocks it the first time. Pick one:
+   - **System Settings → Privacy & Security** → scroll to the message about "MD Viewer" → **Open Anyway** (the route that works on macOS 15 and later).
+   - **Right-click** the app → **Open** → **Open** (macOS 14 and earlier; macOS 15+ no longer offers this in the dialog).
+   - Or remove the quarantine flag once from Terminal:
      ```bash
      xattr -dr com.apple.quarantine "/Applications/MD Viewer.app"
      ```
@@ -37,6 +42,16 @@ A fast, native Markdown viewer for macOS. Built with Tauri 2 (Rust + WKWebView),
    - Find any `.md` in Finder → **Get Info** (`Cmd+I`).
    - Under **Open with**, pick **MD Viewer**.
    - Click **Change All…** → confirm.
+
+**Requirements:** macOS 11 or later. The published DMG is built for **Apple Silicon (arm64)** only. On an Intel Mac, build from source (below).
+
+## Security and privacy
+
+- Raw HTML in Markdown is **not** rendered (it is shown as text). Frontmatter is escaped. Mermaid runs in `strict` mode.
+- A Content-Security-Policy is set. **Remote images (`http(s)://…`) are blocked**, so opening an untrusted file cannot ping a tracking server. Images that do load: files next to the document (relative paths), `data:` and `blob:` URLs.
+- Local images are served through Tauri's asset protocol, limited to the folder of the file you opened and its subfolders. A file sitting directly in your home folder only exposes its direct siblings, not the whole home tree.
+- Links in a document never navigate the app window: `http(s)` and `mailto:` open in your default browser or mail client, relative `.md` links open in a new MD Viewer window, `#anchors` scroll, and everything else (`javascript:`, `file:`, `data:`, …) is ignored.
+- No telemetry, and the app makes no network requests of its own.
 
 ## Add to Vault (Obsidian integration)
 
@@ -48,6 +63,19 @@ A fast, native Markdown viewer for macOS. Built with Tauri 2 (Rust + WKWebView),
 
 You can change the vault folder later via **Settings** (`Cmd+,`).
 
+## Build from source
+
+Requirements: macOS, [Rust](https://rustup.rs) (stable), Node.js 22+, [pnpm](https://pnpm.io) 11, Xcode Command Line Tools.
+
+```bash
+git clone https://github.com/pedroberaldo87/MY-MD-VIEWER.git
+cd MY-MD-VIEWER
+pnpm install --frozen-lockfile
+pnpm tauri build --bundles dmg   # -> src-tauri/target/release/bundle/dmg/
+```
+
+The result matches your Mac's architecture (arm64 on Apple Silicon, x86_64 on Intel). The `.app` is in `src-tauri/target/release/bundle/macos/`.
+
 ## Development
 
 ```bash
@@ -56,6 +84,10 @@ pnpm install
 
 # dev mode with hot reload
 pnpm tauri dev
+
+# typecheck and unit tests
+pnpm typecheck
+pnpm test
 
 # production build (.app + .dmg)
 pnpm tauri build
@@ -103,7 +135,10 @@ src-tauri/            # Rust backend
   icons/              # generated from icons/source.png
 ```
 
-## Notes
+## Releases (maintainers)
 
-- App is **unsigned** — for personal use. Distributing requires Apple Developer ID + notarization.
-- Scoped to macOS for now. Other platforms are not tested.
+CI builds on every push and PR to `main` (`.github/workflows/build.yml`). Pushing a tag `vX.Y.Z` that matches the version in `src-tauri/tauri.conf.json` runs `.github/workflows/release.yml`, which builds the unsigned DMG and attaches it to a **draft** GitHub Release. Review and publish it by hand.
+
+## License
+
+[MIT](LICENSE)
