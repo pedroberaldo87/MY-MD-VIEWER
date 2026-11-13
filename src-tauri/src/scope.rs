@@ -8,11 +8,13 @@
 //! argv, or a file the user approved in an earlier session (persisted by Rust).
 //!
 //! What a command may touch afterwards:
+//!
 //! * a registered file itself (any extension, it was user-chosen), or
 //! * a Markdown file (`.md`, `.markdown`, ...) inside the directory of a
 //!   registered file. This is the same rule as the asset-protocol scope in
 //!   `window.rs` (recursive, except `/` and `$HOME`, where only direct children
 //!   count), so relative `.md` links keep working.
+//!
 //! Paths are canonicalized first, so `..` and symlinks that leave the directory
 //! resolve to their real location and are judged there.
 
